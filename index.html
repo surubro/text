@@ -15,16 +15,30 @@
   <script>
     const username = 'surubro'; // your GitHub username
     const repo = 'text';         // your repo name
-    const path = 'text.txt';      // file you want to edit inside the repo
-    const branch = 'main';        // your branch (probably "main")
-    const token = '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'; // for authentication (not safe in public)
+    const path = 'text.txt';     // file you want to edit inside the repo
+    const branch = 'main';       // your branch (probably "main")
+    xconst token = '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'; // for authentication (not safe in public)
+    let fileSha = ''; // Global variable to store the file SHA
 
     // Load file directly from raw.githubusercontent.com
     fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`)
       .then(response => response.text()) // Get the raw text content
       .then(data => {
         document.getElementById('text-content').value = data;
-        console.log('Loaded content:', data);
+        
+        // Fetch the file's metadata to get the SHA
+        fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        })
+        .then(response => response.json())
+        .then(metadata => {
+          fileSha = metadata.sha; // Save the sha for later use
+          console.log('File metadata:', metadata);
+        })
+        .catch(error => console.error('Error fetching metadata:', error));
       })
       .catch(error => {
         console.error('Error loading file:', error);
@@ -36,6 +50,12 @@
       const content = document.getElementById('text-content').value;
       const base64Content = btoa(content); // encode to Base64
 
+      // Check if the sha exists, then send the update request
+      if (fileSha === '') {
+        alert('❌ Failed to load the file SHA.');
+        return;
+      }
+
       fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
         method: 'PUT',
         headers: {
@@ -45,6 +65,7 @@
         body: JSON.stringify({
           message: 'Updated text.txt from webpage',
           content: base64Content,
+          sha: fileSha, // Use the sha here for updating
           branch: branch
         })
       })
