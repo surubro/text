@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit and Save text.txt to GitHub (NEW TOKEN)</title>
+  <title>Edit and Save text.txt to GitHub</title>
 </head>
 <body>
-  <h1>Edit text.txt from& "text" repository</h1>
+  <h1>Editxzzz text.txt from "text" repository</h1>
 
   <textarea id="text-content" rows="20" cols="100">Loading...</textarea>
   <br><br>
@@ -13,61 +13,41 @@
   <button onclick="saveTextToGitHub()">Save to GitHub</button>
 
   <script>
-    const username = 'surubro'; // your GitHub username
-    const repo = 'text';         // your repo name
-    const path = 'text.txt';     // file you want to edit inside the repo
-    const branch = 'main';       // your branch (probably "main")
-    const token = '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'; // for authentication (not safe in public)
-    let fileSha = ''; // Global variable to store the file SHA
+    const username = 'surubro';  // Your GitHub username
+    const repo = 'text';         // Your repo name
+    const path = 'text.txt';     // File you want to edit inside the repo
+    const branch = 'main';       // Your branch (probably "main")
+    const token = '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'; // Your GitHub Token
 
-    // Load file directly from raw.githubusercontent.com
-    fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`)
-      .then(response => response.text()) // Get the raw text content
-      .then(data => {
-        document.getElementById('text-content').value = data;
-        
-        // Fetch the file's metadata to get the SHA
-        fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        })
-        .then(response => response.json())
-        .then(metadata => {
-          console.log('Metadata Response:', metadata); // Log the full metadata response for debugging
+    let fileSha = '';  // This will hold the file SHA
 
-          // Check if sha exists in the metadata response
-          if (metadata.sha) {
-            fileSha = metadata.sha; // Save the sha for later use
-            console.log('File sha:', fileSha);
-          } else {
-            console.error('Error: No sha found in metadata response');
-            alert('❌ Failed to retrieve file SHA.');
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching metadata:', error);
-          alert('❌ Failed to fetch metadata.');
-        });
-      })
-      .catch(error => {
-        console.error('Error loading file:', error);
-        document.getElementById('text-content').value = 'Failed to load content.';
-      });
+    // Load file content
+    fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}?ref=${branch}`, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const content = atob(data.content);  // Decode from Base64
+      document.getElementById('text-content').value = content;
+      fileSha = data.sha;  // Store the SHA for later use in the PUT request
+    })
+    .catch(error => {
+      console.error('Error loading file:', error);
+      document.getElementById('text-content').value = 'Failed to load content.';
+    });
 
-    // Save file to GitHub (using API)
+    // Save edited file to GitHub
     function saveTextToGitHub() {
       const content = document.getElementById('text-content').value;
-      const base64Content = btoa(content); // encode to Base64
+      const base64Content = btoa(content);  // Encode the content to Base64
 
-      // Check if the sha exists, then send the update request
-      if (fileSha === '') {
+      if (!fileSha) {
         alert('❌ Failed to load the file SHA.');
         return;
       }
-
-      console.log('Sending update request with sha:', fileSha); // Debugging line
 
       fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
         method: 'PUT',
@@ -76,10 +56,10 @@
           'Accept': 'application/vnd.github.v3+json'
         },
         body: JSON.stringify({
-          message: 'Updated text.txt from webpage',
-          content: base64Content,
-          sha: fileSha, // Use the sha here for updating
-          branch: branch
+          message: 'Updated text.txt from webpage',  // Commit message
+          content: base64Content,  // Base64-encoded content
+          sha: fileSha,  // Include the SHA to update the correct version
+          branch: branch  // Specify the branch
         })
       })
       .then(response => response.json())
