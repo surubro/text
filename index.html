@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit and Save text.txt to GitHub (NEW TOKEN)</title>
+  <title>Editxx and Save text.txt to GitHub (NEW TOKEN)</title>
 </head>
 <body>
   <h1>Edit text.txt from "text" repository</h1>
@@ -35,8 +35,13 @@
         })
         .then(response => response.json())
         .then(metadata => {
-          fileSha = metadata.sha; // Save the sha for later use
-          console.log('File metadata:', metadata);
+          if (metadata.sha) {
+            fileSha = metadata.sha; // Save the sha for later use
+            console.log('File metadata:', metadata);
+          } else {
+            console.error('Error: No sha found in metadata');
+            alert('❌ Failed to retrieve file SHA.');
+          }
         })
         .catch(error => console.error('Error fetching metadata:', error));
       })
@@ -56,6 +61,8 @@
         return;
       }
 
+      console.log('Sending update request with sha:', fileSha); // Debugging line
+
       fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
         method: 'PUT',
         headers: {
@@ -71,8 +78,13 @@
       })
       .then(response => response.json())
       .then(data => {
-        alert('✅ File updated successfully!');
-        console.log('Success:', data);
+        if (data.commit) {
+          alert('✅ File updated successfully!');
+          console.log('Success:', data);
+        } else {
+          alert('❌ Something went wrong.');
+          console.error('API Response:', data);
+        }
       })
       .catch(error => {
         alert('❌ Failed to save file.');
