@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit and Save text.txt to Firebase</title>
+  <title>Edit and Save to Firebase</title>
 
   <!-- Include Firebase SDK version 8 (non-modular version) -->
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
@@ -35,7 +35,7 @@
 </head>
 <body>
 
-  <h1>Edit0 and Save text.txt from Firebase</h1>
+  <h1>Edit and Save to Firebase</h1>
 
   <textarea id="text-content">Loading...</textarea><br><br>
   <button onclick="saveTextToFirebase()">Save to Firebase</button>
@@ -60,7 +60,7 @@
 
     const database = firebase.database();
 
-    const filePath = 'text.txt';  // Path in the Realtime Database where the file content will be stored
+    const filePath = 'text_txt';  // Use a valid path without special characters
 
     // Load file content from Firebase
     function loadFile() {
@@ -72,7 +72,16 @@
           document.getElementById('text-content').value = content;
           logToBox('File loaded successfully!');
         } else {
-          logToBox('No content found in Firebase.');
+          logToBox('No content found in Firebase. Initializing new file...');
+          // Initialize with default content if no file exists
+          const defaultContent = "This is the default content of the text file.";
+          fileRef.set(defaultContent).then(() => {
+            document.getElementById('text-content').value = defaultContent;
+            logToBox('New file created with default content.');
+          }).catch(error => {
+            console.error('Error creating new file:', error);
+            logToBox('Error creating new file: ' + error.message);
+          });
         }
       }).catch(error => {
         console.error('Error loading file:', error);
