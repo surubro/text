@@ -5,7 +5,7 @@
   <title>Edit and Save text.txt to GitHub</title>
 </head>
 <body>
-  <h1>Edit text.txt from "text" repository</h1>
+  <h1>Editaaa text.txt from "text" repository</h1>
 
   <textarea id="text-content" rows="20" cols="100">Loading...</textarea>
   <br><br>
@@ -21,28 +21,35 @@
 
     let fileSha = '';  // This will hold the file SHA
 
-    // Load file content using GitHub API (fetch content and metadata)
-    fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}?ref=${branch}`, {
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.content) {
-        const content = atob(data.content);  // Decode the Base64 content
-        document.getElementById('text-content').value = content;
-        fileSha = data.sha;  // Store the SHA for later use
-      } else {
-        console.error('Error: No content in response');
+    // Load file content using GitHub API
+    function loadFile() {
+      fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}?ref=${branch}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load file metadata');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.content) {
+          const content = atob(data.content);  // Decode the Base64 content
+          document.getElementById('text-content').value = content;
+          fileSha = data.sha;  // Store the SHA for later use
+        } else {
+          console.error('No content found');
+          alert('❌ Failed to load content.');
+        }
+      })
+      .catch(error => {
+        console.error('Error loading file:', error);
         alert('❌ Failed to load content.');
-      }
-    })
-    .catch(error => {
-      console.error('Error loading file:', error);
-      alert('❌ Failed to load content.');
-    });
+      });
+    }
 
     // Save edited file to GitHub
     function saveTextToGitHub() {
@@ -82,6 +89,9 @@
         console.error('Error updating file:', error);
       });
     }
+
+    // Call loadFile to load content on page load
+    window.onload = loadFile;
   </script>
 </body>
 </html>
