@@ -5,7 +5,7 @@
   <title>Edit and Save text.txt to GitHub</title>
 </head>
 <body>
-  <h1>Editaaa text.txt from "text" repository</h1>
+  <h1>Editwww text.txt from "text" repository</h1>
 
   <textarea id="text-content" rows="20" cols="100">Loading...</textarea>
   <br><br>
@@ -29,12 +29,7 @@
           'Accept': 'application/vnd.github.v3+json'
         }
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to load file metadata');
-        }
-        return response.json();
-      })
+      .then(response => response.json())
       .then(data => {
         if (data.content) {
           const content = atob(data.content);  // Decode the Base64 content
