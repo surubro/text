@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit and Save text.txt to Firebase</title>
-  
-  <!-- Add Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+  <!-- Include Firebase SDK version 8 (non-modular version) -->
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
 
   <style>
     body {
@@ -35,7 +35,7 @@
 </head>
 <body>
 
-  <h1>Edit and Save text.txt from Firebase</h1>
+  <h1>Edit0 and Save text.txt from Firebase</h1>
 
   <textarea id="text-content">Loading...</textarea><br><br>
   <button onclick="saveTextToFirebase()">Save to Firebase</button>
@@ -56,8 +56,9 @@
     };
 
     // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const database = firebase.database(app);
+    firebase.initializeApp(firebaseConfig);
+
+    const database = firebase.database();
 
     const filePath = 'text.txt';  // Path in the Realtime Database where the file content will be stored
 
