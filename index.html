@@ -5,7 +5,7 @@
   <title>Edit and Save text.txt to GitHub</title>
 </head>
 <body>
-  <h1>Editxzzz text.txt from "text" repository</h1>
+  <h1>Edit text.txt from "text" repository</h1>
 
   <textarea id="text-content" rows="20" cols="100">Loading...</textarea>
   <br><br>
@@ -21,7 +21,7 @@
 
     let fileSha = '';  // This will hold the file SHA
 
-    // Load file content
+    // Load file content using GitHub API (fetch content and metadata)
     fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}?ref=${branch}`, {
       headers: {
         'Authorization': `token ${token}`,
@@ -30,13 +30,18 @@
     })
     .then(response => response.json())
     .then(data => {
-      const content = atob(data.content);  // Decode from Base64
-      document.getElementById('text-content').value = content;
-      fileSha = data.sha;  // Store the SHA for later use in the PUT request
+      if (data.content) {
+        const content = atob(data.content);  // Decode the Base64 content
+        document.getElementById('text-content').value = content;
+        fileSha = data.sha;  // Store the SHA for later use
+      } else {
+        console.error('Error: No content in response');
+        alert('❌ Failed to load content.');
+      }
     })
     .catch(error => {
       console.error('Error loading file:', error);
-      document.getElementById('text-content').value = 'Failed to load content.';
+      alert('❌ Failed to load content.');
     });
 
     // Save edited file to GitHub
