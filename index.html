@@ -3,14 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <title>Edit and Save text.txt to GitHub</title>
+  <style>
+    /* Simple styling for the log box */
+    #log-box {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      width: 100%;
+      height: 200px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Editwww text.txt from "text" repository</h1>
+  <h1>Edit text.txt from "text" repository</h1>
 
   <textarea id="text-content" rows="20" cols="100">Loading...</textarea>
   <br><br>
 
   <button onclick="saveTextToGitHub()">Save to GitHub</button>
+
+  <!-- Log box to show API response and errors -->
+  <div id="log-box"></div>
 
   <script>
     const username = 'surubro';  // Your GitHub username
@@ -31,6 +48,8 @@
       })
       .then(response => response.json())
       .then(data => {
+        console.log('GitHub API Response:', data); // Log the full response to debug
+        logToBox('GitHub API Response: ' + JSON.stringify(data, null, 2));  // Log response in the box
         if (data.content) {
           const content = atob(data.content);  // Decode the Base64 content
           document.getElementById('text-content').value = content;
@@ -43,6 +62,7 @@
       .catch(error => {
         console.error('Error loading file:', error);
         alert('❌ Failed to load content.');
+        logToBox('Error loading file: ' + error.message);  // Log the error in the box
       });
     }
 
@@ -74,15 +94,25 @@
         if (data.commit) {
           alert('✅ File updated successfully!');
           console.log('Success:', data);
+          logToBox('Success: File updated successfully!');  // Log success message in the box
         } else {
           alert('❌ Something went wrong.');
           console.error('API Response:', data);
+          logToBox('Error: Something went wrong! ' + JSON.stringify(data, null, 2));  // Log the error in the box
         }
       })
       .catch(error => {
         alert('❌ Failed to save file.');
         console.error('Error updating file:', error);
+        logToBox('Error updating file: ' + error.message);  // Log error in the box
       });
+    }
+
+    // Function to log messages to the log box
+    function logToBox(message) {
+      const logBox = document.getElementById('log-box');
+      logBox.textContent += message + '\n';
+      logBox.scrollTop = logBox.scrollHeight;  // Auto-scroll to bottom
     }
 
     // Call loadFile to load content on page load
