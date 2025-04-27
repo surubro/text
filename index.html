@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Editxx and Save text.txt to GitHub (NEW TOKEN)</title>
+  <title>Edit and Save text.txt to GitHub (NEW TOKEN)</title>
 </head>
 <body>
   <h1>Edit text.txt from "text" repository</h1>
@@ -35,15 +35,21 @@
         })
         .then(response => response.json())
         .then(metadata => {
+          console.log('Metadata Response:', metadata); // Log the full metadata response for debugging
+
+          // Check if sha exists in the metadata response
           if (metadata.sha) {
             fileSha = metadata.sha; // Save the sha for later use
-            console.log('File metadata:', metadata);
+            console.log('File sha:', fileSha);
           } else {
-            console.error('Error: No sha found in metadata');
+            console.error('Error: No sha found in metadata response');
             alert('❌ Failed to retrieve file SHA.');
           }
         })
-        .catch(error => console.error('Error fetching metadata:', error));
+        .catch(error => {
+          console.error('Error fetching metadata:', error);
+          alert('❌ Failed to fetch metadata.');
+        });
       })
       .catch(error => {
         console.error('Error loading file:', error);
