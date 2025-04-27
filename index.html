@@ -14,34 +14,28 @@
 
   <script>
     const username = 'surubro'; // your GitHub username
-    const repo = 'text';         // your new repo name
+    const repo = 'text';         // your repo name
     const path = 'text.txt';      // file you want to edit inside the repo
     const branch = 'main';        // your branch (probably "main")
-    const token = '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';
+    xconst token = 'xxx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'; // for authentication (not safe in public)
 
-    // Load file
-    fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      const content = atob(data.content); // decode from Base64
-      document.getElementById('text-content').value = content;
-      window.fileSha = data.sha; // Save the SHA for updating
-    })
-    .catch(error => {
-      console.error('Error loading file:', error);
-      document.getElementById('text-content').value = 'Failed to load content.';
-    });
+    // Load file directly from raw.githubusercontent.com
+    fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`)
+      .then(response => response.text()) // Get the raw text content
+      .then(data => {
+        document.getElementById('text-content').value = data;
+        console.log('Loaded content:', data);
+      })
+      .catch(error => {
+        console.error('Error loading file:', error);
+        document.getElementById('text-content').value = 'Failed to load content.';
+      });
 
-    // Save file
+    // Save file to GitHub (using API)
     function saveTextToGitHub() {
       const content = document.getElementById('text-content').value;
       const base64Content = btoa(content); // encode to Base64
-      
+
       fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
         method: 'PUT',
         headers: {
@@ -51,7 +45,6 @@
         body: JSON.stringify({
           message: 'Updated text.txt from webpage',
           content: base64Content,
-          sha: window.fileSha,
           branch: branch
         })
       })
