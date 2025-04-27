@@ -2,15 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit and Save text.txt to GitHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit and Save text.txt to Firebase</title>
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
   <style>
-    /* Simple styling for the log box */
-    #log-box {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-top: 20px;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    textarea {
       width: 100%;
-      height: 200px;
+      height: 300px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    #log-box {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      width: 100%;
+      height: 100px;
       overflow-y: auto;
       background-color: #f9f9f9;
       font-family: monospace;
@@ -19,92 +32,61 @@
   </style>
 </head>
 <body>
-  <h1>Edit text.txt from "text" repository</h1>
 
-  <textarea id="text-content" rows="20" cols="100">Loading...</textarea>
-  <br><br>
+  <h1>Edit and Save text.txt from Firebase</h1>
 
-  <button onclick="saveTextToGitHub()">Save to GitHub</button>
+  <textarea id="text-content">Loading...</textarea><br><br>
+  <button onclick="saveTextToFirebase()">Save to Firebase</button>
 
   <!-- Log box to show API response and errors -->
   <div id="log-box"></div>
 
   <script>
-    const username = 'surubro';  // Your GitHub username
-    const repo = 'text';         // Your repo name
-    const path = 'text.txt';     // File you want to edit inside the repo
-    const branch = 'main';       // Your branch (probably "main")
-    const token = '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'; // Replace with your actual GitHub Token
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxbzsSi-dsFPPGDeogz2SaEsW_3OKu-QU",
+      authDomain: "striped-acrobat-342207.firebaseapp.com",
+      databaseURL: "https://striped-acrobat-342207-default-rtdb.firebaseio.com",
+      projectId: "striped-acrobat-342207",
+      storageBucket: "striped-acrobat-342207.appspot.com",
+      messagingSenderId: "367114842706",
+      appId: "1:367114842706:web:0f6d504163ed3c72ed658b"
+    };
 
-    let fileSha = '';  // This will hold the file SHA
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database(app);
 
-    // Load file content using GitHub API
+    const filePath = 'text.txt';  // Path in the Realtime Database where the file content will be stored
+
+    // Load file content from Firebase
     function loadFile() {
-      fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}?ref=${branch}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log('GitHub API Response:', data); // Log the full response to debug
-        logToBox('GitHub API Response: ' + JSON.stringify(data, null, 2));  // Log response in the box
-        if (data.content) {
-          const content = atob(data.content);  // Decode the Base64 content
+      const fileRef = database.ref(filePath);
+
+      fileRef.get().then(snapshot => {
+        if (snapshot.exists()) {
+          const content = snapshot.val();
           document.getElementById('text-content').value = content;
-          fileSha = data.sha;  // Store the SHA for later use
+          logToBox('File loaded successfully!');
         } else {
-          console.error('No content found');
-          alert('❌ Failed to load content.');
+          logToBox('No content found in Firebase.');
         }
-      })
-      .catch(error => {
+      }).catch(error => {
         console.error('Error loading file:', error);
-        alert('❌ Failed to load content.');
-        logToBox('Error loading file: ' + error.message);  // Log the error in the box
+        logToBox('Error loading file: ' + error.message);
       });
     }
 
-    // Save edited file to GitHub
-    function saveTextToGitHub() {
+    // Save the edited content to Firebase
+    function saveTextToFirebase() {
       const content = document.getElementById('text-content').value;
-      const base64Content = btoa(content);  // Encode the content to Base64
+      const fileRef = database.ref(filePath);
 
-      if (!fileSha) {
-        alert('❌ Failed to load the file SHA.');
-        return;
-      }
-
-      fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
-        },
-        body: JSON.stringify({
-          message: 'Updated text.txt from webpage',  // Commit message
-          content: base64Content,  // Base64-encoded content
-          sha: fileSha,  // Include the SHA to update the correct version
-          branch: branch  // Specify the branch
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.commit) {
-          alert('✅ File updated successfully!');
-          console.log('Success:', data);
-          logToBox('Success: File updated successfully!');  // Log success message in the box
-        } else {
-          alert('❌ Something went wrong.');
-          console.error('API Response:', data);
-          logToBox('Error: Something went wrong! ' + JSON.stringify(data, null, 2));  // Log the error in the box
-        }
-      })
-      .catch(error => {
-        alert('❌ Failed to save file.');
-        console.error('Error updating file:', error);
-        logToBox('Error updating file: ' + error.message);  // Log error in the box
+      fileRef.set(content).then(() => {
+        logToBox('File saved successfully!');
+      }).catch(error => {
+        console.error('Error saving file:', error);
+        logToBox('Error saving file: ' + error.message);
       });
     }
 
@@ -115,8 +97,9 @@
       logBox.scrollTop = logBox.scrollHeight;  // Auto-scroll to bottom
     }
 
-    // Call loadFile to load content on page load
+    // Call loadFile to load content when the page is loaded
     window.onload = loadFile;
   </script>
+
 </body>
 </html>
