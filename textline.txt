@@ -1,4 +1,5 @@
 manjulkaranil090-1@okaxis
 
 shahimran1137-1@okaxis
+https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip
 ngrok config add-authtoken 22eVuxFOjz9uLpY4xTdjiQCwZ05_49UEzD2TfLECqMP3Cssxv
