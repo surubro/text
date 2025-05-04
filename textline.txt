@@ -1,3 +1,4 @@
 cd C:\Users\suru\Downloads
 Start-Process "ngrok.exe" -ArgumentList "tcp 22" -WindowStyle Hidden
 ngrok config add-authtoken 22eVuxFOjz9uLpY4xTdjiQCwZ05_49UEzD2TfLECqMP3Cssxv
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine -Force
