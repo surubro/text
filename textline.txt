@@ -1,3 +1,3 @@
-https://ngrok.com/downloads/windows
-https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip
+cd C:\Users\suru\Downloads
+Start-Process "ngrok.exe" -ArgumentList "tcp 22" -WindowStyle Hidden
 ngrok config add-authtoken 22eVuxFOjz9uLpY4xTdjiQCwZ05_49UEzD2TfLECqMP3Cssxv
