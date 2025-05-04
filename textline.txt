@@ -1,3 +1,4 @@
 manjulkaranil090-1@okaxis
 
 shahimran1137-1@okaxis
+ngrok config add-authtoken 22eVuxFOjz9uLpY4xTdjiQCwZ05_49UEzD2TfLECqMP3Cssxv
