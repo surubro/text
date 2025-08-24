@@ -3,48 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit and Save to Firebase</title>
+  <title>Firebase Editor (Login Required)</title>
 
-  <!-- Include Firebase SDK version 8 (non-modular version) -->
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
       padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.1);
+    }
+    h1 { font-size: 20px; margin-bottom: 20px; }
+    label { font-size: 14px; display: block; margin-top: 10px; }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-top: 5px;
     }
     textarea {
       width: 100%;
       height: 300px;
-      font-family: monospace;
-      font-size: 14px;
-    }
-    #log-box {
-      margin-top: 20px;
-      padding: 10px;
+      margin-top: 15px;
       border: 1px solid #ccc;
-      width: 100%;
-      height: 100px;
-      overflow-y: auto;
-      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 10px;
       font-family: monospace;
-      font-size: 12px;
+      resize: vertical;
     }
+    button {
+      padding: 10px 16px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-primary { background: #1f6feb; color: #fff; }
+    .btn-secondary { background: #eee; }
+    .hidden { display: none; }
+    #log { font-size: 13px; color: #555; margin-top: 10px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Editor (Verified Users Only)</h1>
 
-  <h1>Edit and Save to Firebase</h1>
+    <!-- Login form -->
+    <div id="loginBox">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+      <button id="loginBtn" class="btn-primary">Login</button>
+    </div>
 
-  <textarea id="text-content">Loading...</textarea><br><br>
-  <button onclick="saveTextToFirebase()">Save to Firebase</button>
+    <!-- Editor -->
+    <div id="editorBox" class="hidden">
+      <textarea id="text-content"></textarea>
+      <div>
+        <button id="saveBtn" class="btn-primary">Save</button>
+        <button id="reloadBtn" class="btn-secondary">Reload</button>
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+      </div>
+    </div>
 
-  <!-- Log box to show API response and errors -->
-  <div id="log-box"></div>
+    <div id="log"></div>
+  </div>
 
   <script>
-    // Firebase configuration
+    // Firebase config (your project)
     const firebaseConfig = {
       apiKey: "AIzaSyBxbzsSi-dsFPPGDeogz2SaEsW_3OKu-QU",
       authDomain: "striped-acrobat-342207.firebaseapp.com",
@@ -54,64 +97,74 @@
       messagingSenderId: "367114842706",
       appId: "1:367114842706:web:0f6d504163ed3c72ed658b"
     };
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    const database = firebase.database();
+    const filePath = "text_txt"; // same as before
+    const loginBox = document.getElementById("loginBox");
+    const editorBox = document.getElementById("editorBox");
+    const textarea = document.getElementById("text-content");
+    const logDiv = document.getElementById("log");
 
-    const filePath = 'text_txt';  // Use a valid path without special characters
+    function log(msg) {
+      logDiv.textContent += msg + "\n";
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
 
-    // Load file content from Firebase
-    function loadFile() {
-      const fileRef = database.ref(filePath);
+    // Auth state
+    firebase.auth().onAuthStateChanged(user => {
+      if (user && user.emailVerified) {
+        loginBox.classList.add("hidden");
+        editorBox.classList.remove("hidden");
+        log("Logged in as " + user.email);
+        loadFile();
+      } else {
+        loginBox.classList.remove("hidden");
+        editorBox.classList.add("hidden");
+      }
+    });
 
-      fileRef.get().then(snapshot => {
-        if (snapshot.exists()) {
-          const content = snapshot.val();
-          document.getElementById('text-content').value = content;
-          logToBox('File loaded successfully!');
+    document.getElementById("loginBtn").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, pass);
+        log("Login success");
+      } catch (e) {
+        log("Login error: " + e.message);
+      }
+    };
+
+    document.getElementById("logoutBtn").onclick = () => {
+      firebase.auth().signOut();
+      log("Logged out");
+    };
+
+    async function loadFile() {
+      try {
+        const snap = await db.ref(filePath).get();
+        if (snap.exists()) {
+          textarea.value = snap.val();
+          log("File loaded");
         } else {
-          logToBox('No content found in Firebase. Initializing new file...');
-          // Initialize with default content if no file exists
-          const defaultContent = "This is the default content of the text file.";
-          fileRef.set(defaultContent).then(() => {
-            document.getElementById('text-content').value = defaultContent;
-            logToBox('New file created with default content.');
-          }).catch(error => {
-            console.error('Error creating new file:', error);
-            logToBox('Error creating new file: ' + error.message);
-          });
+          textarea.value = "";
+          log("No file found, starting empty");
         }
-      }).catch(error => {
-        console.error('Error loading file:', error);
-        logToBox('Error loading file: ' + error.message);
-      });
+      } catch (e) {
+        log("Error loading: " + e.message);
+      }
     }
 
-    // Save the edited content to Firebase
-    function saveTextToFirebase() {
-      const content = document.getElementById('text-content').value;
-      const fileRef = database.ref(filePath);
+    document.getElementById("reloadBtn").onclick = loadFile;
 
-      fileRef.set(content).then(() => {
-        logToBox('File saved successfully!');
-      }).catch(error => {
-        console.error('Error saving file:', error);
-        logToBox('Error saving file: ' + error.message);
-      });
-    }
-
-    // Function to log messages to the log box
-    function logToBox(message) {
-      const logBox = document.getElementById('log-box');
-      logBox.textContent += message + '\n';
-      logBox.scrollTop = logBox.scrollHeight;  // Auto-scroll to bottom
-    }
-
-    // Call loadFile to load content when the page is loaded
-    window.onload = loadFile;
+    document.getElementById("saveBtn").onclick = async () => {
+      try {
+        await db.ref(filePath).set(textarea.value);
+        log("File saved");
+      } catch (e) {
+        log("Error saving: " + e.message);
+      }
+    };
   </script>
-
 </body>
 </html>
