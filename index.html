@@ -3,91 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Editor (Login Required)</title>
+  <title>Edit and Save to Firebase</title>
 
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f6fa;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      width: 100%;
-      max-width: 600px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.1);
-    }
-    h1 { font-size: 20px; margin-bottom: 20px; }
-    label { font-size: 14px; display: block; margin-top: 10px; }
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-top: 5px;
-    }
-    textarea {
-      width: 100%;
-      height: 300px;
-      margin-top: 15px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      font-family: monospace;
-      resize: vertical;
-    }
-    button {
-      padding: 10px 16px;
-      margin-top: 15px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .btn-primary { background: #1f6feb; color: #fff; }
-    .btn-secondary { background: #eee; }
-    .hidden { display: none; }
-    #log { font-size: 13px; color: #555; margin-top: 10px; white-space: pre-wrap; }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Editor (Verified Users Only)</h1>
+  <h1>Firebase Text Editor</h1>
 
-    <!-- Login form -->
-    <div id="loginBox">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="you@example.com">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="••••••••">
-      <button id="loginBtn" class="btn-primary">Login</button>
-    </div>
-
-    <!-- Editor -->
-    <div id="editorBox" class="hidden">
-      <textarea id="text-content"></textarea>
-      <div>
-        <button id="saveBtn" class="btn-primary">Save</button>
-        <button id="reloadBtn" class="btn-secondary">Reload</button>
-        <button id="logoutBtn" class="btn-secondary">Logout</button>
-      </div>
-    </div>
-
-    <div id="log"></div>
+  <!-- Login box -->
+  <div id="loginBox">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
   </div>
 
+  <!-- Editor -->
+  <textarea id="text-content" placeholder="Loading..."></textarea>
+  <br>
+  <button id="saveBtn">Save</button>
+  <button id="reloadBtn">Reload</button>
+  <button id="logoutBtn" style="display:none;">Logout</button>
+
+  <pre id="log"></pre>
+
   <script>
-    // Firebase config (your project)
+    // Firebase config (same as your file)
     const firebaseConfig = {
       apiKey: "AIzaSyBxbzsSi-dsFPPGDeogz2SaEsW_3OKu-QU",
       authDomain: "striped-acrobat-342207.firebaseapp.com",
@@ -99,43 +42,53 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     const filePath = "text_txt"; // same as before
+
     const loginBox = document.getElementById("loginBox");
-    const editorBox = document.getElementById("editorBox");
+    const emailInput = document.getElementById("email");
+    const passInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
     const textarea = document.getElementById("text-content");
-    const logDiv = document.getElementById("log");
+    const saveBtn = document.getElementById("saveBtn");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const logBox = document.getElementById("log");
 
     function log(msg) {
-      logDiv.textContent += msg + "\n";
-      logDiv.scrollTop = logDiv.scrollHeight;
+      logBox.textContent += msg + "\n";
+      logBox.scrollTop = logBox.scrollHeight;
     }
 
     // Auth state
     firebase.auth().onAuthStateChanged(user => {
       if (user && user.emailVerified) {
-        loginBox.classList.add("hidden");
-        editorBox.classList.remove("hidden");
+        loginBox.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        textarea.disabled = false;
+        saveBtn.disabled = false;
+        reloadBtn.disabled = false;
         log("Logged in as " + user.email);
         loadFile();
       } else {
-        loginBox.classList.remove("hidden");
-        editorBox.classList.add("hidden");
+        loginBox.style.display = "block";
+        logoutBtn.style.display = "none";
+        textarea.disabled = true;
+        saveBtn.disabled = true;
+        reloadBtn.disabled = true;
+        log("Please login (only verified users allowed).");
       }
     });
 
-    document.getElementById("loginBtn").onclick = async () => {
-      const email = document.getElementById("email").value;
-      const pass = document.getElementById("password").value;
+    loginBtn.onclick = async () => {
       try {
-        await firebase.auth().signInWithEmailAndPassword(email, pass);
+        await firebase.auth().signInWithEmailAndPassword(emailInput.value, passInput.value);
         log("Login success");
       } catch (e) {
         log("Login error: " + e.message);
       }
     };
 
-    document.getElementById("logoutBtn").onclick = () => {
+    logoutBtn.onclick = () => {
       firebase.auth().signOut();
       log("Logged out");
     };
@@ -148,16 +101,16 @@
           log("File loaded");
         } else {
           textarea.value = "";
-          log("No file found, starting empty");
+          log("No file found");
         }
       } catch (e) {
         log("Error loading: " + e.message);
       }
     }
 
-    document.getElementById("reloadBtn").onclick = loadFile;
+    reloadBtn.onclick = loadFile;
 
-    document.getElementById("saveBtn").onclick = async () => {
+    saveBtn.onclick = async () => {
       try {
         await db.ref(filePath).set(textarea.value);
         log("File saved");
